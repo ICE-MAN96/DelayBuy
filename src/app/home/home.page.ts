@@ -42,19 +42,25 @@ export class HomePage implements OnInit, OnDestroy {
       this.savedMoney = total;
     });
 
-    // Request notification permissions for Web/PWA
-    try {
-      const permission = await LocalNotifications.checkPermissions();
-      if (permission.display !== 'granted') {
-        await LocalNotifications.requestPermissions();
-      }
-    } catch (e) {
-      console.log('Notifications not supported on this browser');
-    }
-
     // Update progress bars and remaining time every 10 seconds
     this.updateInterval = setInterval(() => {
     }, 10000);
+  }
+
+  async requestNotificationPermission() {
+    try {
+      const permission = await LocalNotifications.requestPermissions();
+      if (permission.display === 'granted') {
+        const toast = await this.toastCtrl.create({
+          message: 'Notifikasi berhasil diaktifkan!',
+          duration: 2000,
+          color: 'success'
+        });
+        toast.present();
+      }
+    } catch (e) {
+      console.error('Permission request failed', e);
+    }
   }
 
   ngOnDestroy() {
@@ -66,6 +72,13 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   async addItem() {
+    // For iOS Web: Permission MUST be requested via user gesture (button click)
+    try {
+      const status = await LocalNotifications.checkPermissions();
+      if (status.display !== 'granted') {
+        await LocalNotifications.requestPermissions();
+      }
+    } catch (e) {}
     if (!this.newItem.name || !this.newItem.price || this.newItem.price <= 0) {
       const toast = await this.toastCtrl.create({
         message: 'Mohon isi nama dan harga dengan benar!',
