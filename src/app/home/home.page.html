@@ -1,20 +1,186 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>
-      Blank
+<ion-header class="ion-no-border">
+  <ion-toolbar color="transparent">
+    <ion-title class="ion-text-center">
+      <span class="gradient-text">DELAYBUY</span>
     </ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <div class="header-background"></div>
 
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
+  <!-- Savings Insight Card -->
+  <div class="insight-card-wrapper ion-padding-horizontal">
+    <ion-card class="glass-card insight-card">
+      <ion-card-content class="ion-text-center">
+        <h2 class="insight-title">Tabungan Berhasil</h2>
+        <div class="insight-amount">{{ savedMoney | currency:'IDR':'symbol-narrow':'1.0-0' }}</div>
+        <p class="insight-subtitle">Uang yang kamu selamatkan 💰</p>
+      </ion-card-content>
+    </ion-card>
   </div>
+
+  <ion-segment [(ngModel)]="segment" class="custom-segment">
+    <ion-segment-button value="cooling">
+      <ion-label>PENDING</ion-label>
+    </ion-segment-button>
+    <ion-segment-button value="history">
+      <ion-label>HISTORY</ion-label>
+    </ion-segment-button>
+  </ion-segment>
+
+  <!-- Search and Filter -->
+  <div class="search-filter-container">
+    <ion-searchbar [(ngModel)]="searchTerm" placeholder="Cari..." class="custom-search" mode="ios"></ion-searchbar>
+    <ion-item class="priority-filter" lines="none">
+      <ion-select [(ngModel)]="filterPriority" interface="popover">
+        <ion-select-option value="all">Prioritas</ion-select-option>
+        <ion-select-option value="low">Rendah</ion-select-option>
+        <ion-select-option value="medium">Sedang</ion-select-option>
+        <ion-select-option value="high">Tinggi</ion-select-option>
+      </ion-select>
+    </ion-item>
+  </div>
+
+  <div class="list-container ion-padding">
+    <!-- Cooling Down List -->
+    <div *ngIf="segment === 'cooling'">
+      <div *ngIf="coolingItems.length === 0" class="empty-state">
+        <ion-icon name="hourglass-outline" style="font-size: 48px; opacity: 0.1;"></ion-icon>
+        <p>Belum ada barang tertunda.</p>
+      </div>
+
+      <ion-card *ngFor="let item of coolingItems" class="item-card ion-no-margin">
+        <div class="priority-indicator" [class]="item.priority"></div>
+        <ion-card-content>
+          <div class="item-header">
+            <h3>{{ item.name }}</h3>
+            <span class="price">{{ item.price | currency:'IDR':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+
+          <div class="cooldown-timer">
+            <ion-progress-bar [value]="getProgress(item)" [color]="getProgress(item) >= 1 ? 'success' : 'primary'"></ion-progress-bar>
+            <div class="timer-info">
+              <span *ngIf="!isCooldownDone(item)">{{ getRemainingTime(item) }}</span>
+              <span *ngIf="isCooldownDone(item)" class="ready-text">SIAP DIPUTUSKAN</span>
+            </div>
+          </div>
+
+          <div class="action-buttons" *ngIf="isCooldownDone(item)">
+            <ion-button fill="outline" color="danger" (click)="makeDecision(item.id, 'canceled')">BATAL</ion-button>
+            <ion-button fill="solid" color="success" (click)="makeDecision(item.id, 'bought')">BELI</ion-button>
+          </div>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <!-- History List -->
+    <div *ngIf="segment === 'history'">
+      <!-- Stats Summary -->
+      <div *ngIf="historyStats && historyItems.length > 0" class="stats-summary">
+        <ion-card class="stats-card">
+          <ion-card-content>
+            <div class="stats-row">
+              <div class="stat-item">
+                <span class="stat-val">{{ historyStats.canceled }}%</span>
+                <span class="stat-label">HEMAT</span>
+              </div>
+              <div class="stat-divider"></div>
+              <div class="stat-item">
+                <span class="stat-val">{{ historyStats.bought }}%</span>
+                <span class="stat-label">BELI</span>
+              </div>
+            </div>
+          </ion-card-content>
+        </ion-card>
+        <ion-button expand="block" fill="clear" color="danger" (click)="clearHistory()" class="ion-margin-top" style="font-size: 11px; font-weight: 800;">
+          HAPUS SEMUA RIWAYAT
+        </ion-button>
+      </div>
+
+      <div *ngIf="historyItems.length === 0" class="empty-state">
+        <ion-icon name="archive-outline" style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;"></ion-icon>
+        <p>Belum ada jejak belanjaanmu.</p>
+      </div>
+
+      <ion-card *ngFor="let item of historyItems" class="item-card glass-card history-card" [class.bought]="item.status === 'bought'" [class.canceled]="item.status === 'canceled'">
+        <ion-card-content>
+          <div class="item-header">
+            <h3>{{ item.name }}</h3>
+            <span class="price">{{ item.price | currency:'IDR':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+          <div class="status-badge" [class]="item.status">
+            {{ item.status === 'bought' ? 'DIBELI' : 'DIBATALKAN' }}
+          </div>
+          <ion-button fill="clear" color="medium" class="delete-btn" (click)="deleteItem(item.id)">
+            <ion-icon name="trash-outline"></ion-icon>
+          </ion-button>
+        </ion-card-content>
+      </ion-card>
+    </div>
+  </div>
+
+  <!-- Add Button -->
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button class="add-btn" (click)="setOpen(true)">
+      <ion-icon name="add" style="font-size: 32px;"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+
+  <!-- Add Item Modal -->
+  <ion-modal [isOpen]="isModalOpen" (didDismiss)="setOpen(false)" initialBreakpoint="0.8" [breakpoints]="[0, 0.8, 1]">
+    <ng-template>
+      <ion-content class="ion-padding modal-content">
+        <div class="ion-text-center ion-margin-bottom">
+          <h2 style="font-weight: 800; color: var(--ion-color-primary);">TAMBAH BARANG</h2>
+          <p style="color: var(--ion-color-medium); font-size: 14px;">Mari beri waktu untuk hatimu berpikir...</p>
+        </div>
+
+        <div class="form-container">
+          <ion-item class="custom-input glass-card" lines="none">
+            <ion-label position="stacked">Nama Barang</ion-label>
+            <ion-input [(ngModel)]="newItem.name" placeholder="Contoh: PS5 Pro"></ion-input>
+          </ion-item>
+
+          <ion-item class="custom-input glass-card" lines="none">
+            <ion-label position="stacked">Harga Estimasi (Rp)</ion-label>
+            <ion-input type="number" [(ngModel)]="newItem.price" placeholder="0"></ion-input>
+          </ion-item>
+
+          <div class="cooldown-input-group">
+            <ion-item class="custom-input glass-card cooldown-value" lines="none">
+              <ion-label position="stacked">Waktu</ion-label>
+              <ion-input type="number" [(ngModel)]="newItem.cooldownValue" placeholder="1"></ion-input>
+            </ion-item>
+            
+            <ion-item class="custom-input glass-card cooldown-unit" lines="none">
+              <ion-label position="stacked">Satuan</ion-label>
+              <ion-select [(ngModel)]="newItem.cooldownUnit" interface="popover">
+                <ion-select-option value="minutes">Menit</ion-select-option>
+                <ion-select-option value="hours">Jam</ion-select-option>
+                <ion-select-option value="days">Hari</ion-select-option>
+              </ion-select>
+            </ion-item>
+          </div>
+
+          <ion-item class="custom-input glass-card" lines="none">
+            <ion-label position="stacked">Seberapa Penting?</ion-label>
+            <ion-select [(ngModel)]="newItem.priority" interface="popover">
+              <ion-select-option value="low">Rendah (Cuma Kepengen)</ion-select-option>
+              <ion-select-option value="medium">Sedang (Boleh Juga)</ion-select-option>
+              <ion-select-option value="high">Tinggi (Sangat Butuh)</ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-button expand="block" class="submit-btn" (click)="addItem()">
+            MULAI COOLING DOWN
+          </ion-button>
+          <ion-button expand="block" fill="clear" color="medium" (click)="setOpen(false)">
+            BATALKAN
+          </ion-button>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
 </ion-content>
