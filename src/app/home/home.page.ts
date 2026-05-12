@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DataService } from '../services/data.service';
 import { Item } from '../models/item.model';
 import { ModalController, ToastController } from '@ionic/angular';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 @Component({
   selector: 'app-home',
@@ -33,13 +34,23 @@ export class HomePage implements OnInit, OnDestroy {
     private toastCtrl: ToastController
   ) {}
 
-  ngOnInit() {
+  async ngOnInit() {
     this.dataService.items$.subscribe(data => {
       this.items = data.sort((a, b) => b.createdAt - a.createdAt);
     });
     this.dataService.totalSaved$.subscribe(total => {
       this.savedMoney = total;
     });
+
+    // Request notification permissions for Web/PWA
+    try {
+      const permission = await LocalNotifications.checkPermissions();
+      if (permission.display !== 'granted') {
+        await LocalNotifications.requestPermissions();
+      }
+    } catch (e) {
+      console.log('Notifications not supported on this browser');
+    }
 
     // Update progress bars and remaining time every 10 seconds
     this.updateInterval = setInterval(() => {
