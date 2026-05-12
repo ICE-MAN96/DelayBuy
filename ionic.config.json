@@ -1,0 +1,7 @@
+{
+  "name": "DelayBuy",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
