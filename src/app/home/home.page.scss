@@ -64,6 +64,7 @@
     letter-spacing: 1px;
     
     &::part(indicator-background) {
+      background: var(--ion-color-primary);
       box-shadow: 0 4px 10px rgba(var(--ion-color-primary-rgb), 0.3);
     }
   }
@@ -78,7 +79,7 @@
   gap: 8px;
 
   .custom-search {
-    --background: #fff;
+    --background: var(--ion-card-background, #fff);
     --border-radius: 12px;
     --height: 48px;
     padding: 0;
@@ -87,7 +88,7 @@
   }
 
   .priority-filter {
-    --background: #fff;
+    --background: var(--ion-card-background, #fff);
     border-radius: 12px;
     margin: 0;
     font-weight: 700;
@@ -167,18 +168,21 @@
     }
   }
   
-  .action-buttons {
+  .item-actions-mini {
     display: flex;
-    gap: 8px;
-    margin-top: 16px;
+    justify-content: flex-end;
+    gap: 0;
+    margin-top: 8px;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    padding-top: 4px;
     
     ion-button {
-      flex: 1;
+      --padding-start: 8px;
+      --padding-end: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      height: 32px;
       margin: 0;
-      --border-radius: 10px;
-      font-weight: 800;
-      font-size: 12px;
-      height: 40px;
     }
   }
 }
@@ -204,26 +208,82 @@
   }
   
   .delete-btn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
     --color: var(--ion-color-medium);
   }
 }
 
 .stats-summary {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   .stats-card {
     margin: 0;
-    border-radius: 16px;
-    background: var(--ion-color-dark);
-    color: #fff;
+    border-radius: 20px;
+    background: #fff !important;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
     
-    .stat-item {
-      .stat-val { font-size: 24px; color: #fff; }
-      .stat-label { color: rgba(255, 255, 255, 0.5); }
+    .stats-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
     }
-    .stat-divider { background: rgba(255, 255, 255, 0.1); }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      padding: 0 10px;
+
+      .stat-icon-wrapper {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+      }
+
+      .stat-info {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .stat-val { 
+        font-size: 20px; 
+        font-weight: 800;
+        color: var(--ion-color-dark);
+        line-height: 1;
+      }
+      .stat-label { 
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        color: var(--ion-color-medium);
+        text-transform: uppercase;
+        margin-top: 4px;
+      }
+
+      &.saved {
+        .stat-icon-wrapper {
+          background: rgba(var(--ion-color-success-rgb), 0.1);
+          color: var(--ion-color-success);
+        }
+      }
+      &.bought {
+        .stat-icon-wrapper {
+          background: rgba(var(--ion-color-primary-rgb), 0.1);
+          color: var(--ion-color-primary);
+        }
+      }
+    }
+    
+    .stat-divider { 
+      width: 1px; 
+      height: 30px; 
+      background: rgba(0, 0, 0, 0.06); 
+    }
   }
 }
 
@@ -241,16 +301,113 @@
   p { font-weight: 600; color: var(--ion-color-medium); font-size: 14px; margin-top: 10px; }
 }
 
-@media (prefers-color-scheme: dark) {
+:host-context(.ion-palette-dark) {
+  --ion-background-color: #050810 !important;
+  --ion-text-color: #ffffff !important;
+
   .header-background {
-    background: linear-gradient(180deg, rgba(var(--ion-color-primary-rgb), 0.1) 0%, transparent 100%);
+    background: linear-gradient(180deg, rgba(59, 130, 246, 0.15) 0%, transparent 100%);
   }
-  .insight-card, .custom-search, .priority-filter {
-    background: #1e293b !important;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+  
+  .insight-card {
+    background: #111827 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    
+    .insight-title { color: #94a3b8 !important; }
+    .insight-amount { color: #ffffff !important; }
+    .insight-subtitle { color: #cbd5e1 !important; }
   }
+
+  .custom-search {
+    --background: #111827 !important;
+    --color: #ffffff !important;
+    --placeholder-color: #64748b !important;
+    --icon-color: #3b82f6 !important;
+    background: #111827 !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .priority-filter {
+    --background: #111827 !important;
+    --color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    
+    ion-select { 
+      --color: #ffffff !important;
+      color: #ffffff !important; 
+    }
+  }
+
   .item-card {
-    background: #1e293b;
-    border: 1px solid rgba(255, 255, 255, 0.03);
+    background: #111827 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    
+    .item-header {
+      h3 { 
+        color: #ffffff !important; 
+        -webkit-text-fill-color: #ffffff !important;
+      }
+      .price { 
+        color: #60a5fa !important; 
+      }
+    }
+    
+    .cooldown-timer {
+      ion-progress-bar { 
+        --background: rgba(255, 255, 255, 0.05); 
+        --progress-background: #3b82f6;
+      }
+      .timer-info { 
+        color: #94a3b8 !important; 
+      }
+    }
+
+    .item-actions-mini {
+      border-top-color: rgba(255, 255, 255, 0.1);
+      ion-button { 
+        --color: #cbd5e1 !important; 
+        color: #cbd5e1 !important;
+      }
+    }
+  }
+  
+  .history-card {
+    .delete-btn { --color: #f87171 !important; }
+  }
+
+  .stats-summary .stats-card {
+    background: #111827 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    
+    .stat-item {
+      .stat-val { color: #ffffff !important; }
+      .stat-label { color: #94a3b8 !important; }
+    }
+  }
+
+  .custom-segment {
+    background: #111827;
+    ion-segment-button {
+      --color: #94a3b8;
+      --color-checked: #ffffff;
+    }
+  }
+
+  .modal-content {
+    --background: #050810;
+    h2 { color: #ffffff !important; }
+    p { color: #94a3b8 !important; }
+  }
+  
+  .custom-input {
+    --background: #111827 !important;
+    --color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    ion-label { color: #cbd5e1 !important; }
+    ion-input, ion-select { 
+      --color: #ffffff !important;
+      color: #ffffff !important; 
+    }
   }
 }

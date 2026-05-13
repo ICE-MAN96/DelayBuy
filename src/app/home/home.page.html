@@ -1,13 +1,14 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar color="transparent">
-    <ion-title class="ion-text-center">
-      <span class="gradient-text">DELAYBUY</span>
-    </ion-title>
-  </ion-toolbar>
-</ion-header>
-
 <ion-content [fullscreen]="true">
   <div class="header-background"></div>
+
+  <div class="header-container ion-padding-top" style="position: relative; z-index: 1; display: flex; justify-content: center; align-items: center;">
+    <h2 style="margin: 0; font-weight: 800; font-size: 20px; letter-spacing: 1px; color: var(--ion-color-primary);">
+      <span class="gradient-text">DELAYBUY</span>
+    </h2>
+    <ion-button fill="clear" color="medium" (click)="toggleDarkMode()" style="position: absolute; right: 10px;">
+      <ion-icon [name]="isDarkMode ? 'sunny' : 'moon'" slot="icon-only"></ion-icon>
+    </ion-button>
+  </div>
 
   <!-- Savings Insight Card -->
   <div class="insight-card-wrapper ion-padding-horizontal">
@@ -70,6 +71,17 @@
             <ion-button fill="outline" color="danger" (click)="makeDecision(item.id, 'canceled')">BATAL</ion-button>
             <ion-button fill="solid" color="success" (click)="makeDecision(item.id, 'bought')">BELI</ion-button>
           </div>
+
+          <div class="item-actions-mini" *ngIf="!isCooldownDone(item)">
+            <ion-button fill="clear" color="medium" (click)="editItem(item)">
+              <ion-icon name="create-outline" slot="start"></ion-icon>
+              EDIT
+            </ion-button>
+            <ion-button fill="clear" color="danger" (click)="deleteItem(item.id)">
+              <ion-icon name="trash-outline" slot="start"></ion-icon>
+              HAPUS
+            </ion-button>
+          </div>
         </ion-card-content>
       </ion-card>
     </div>
@@ -78,17 +90,27 @@
     <div *ngIf="segment === 'history'">
       <!-- Stats Summary -->
       <div *ngIf="historyStats && historyItems.length > 0" class="stats-summary">
-        <ion-card class="stats-card">
+        <ion-card class="stats-card glass-card">
           <ion-card-content>
             <div class="stats-row">
-              <div class="stat-item">
-                <span class="stat-val">{{ historyStats.canceled }}%</span>
-                <span class="stat-label">HEMAT</span>
+              <div class="stat-item saved">
+                <div class="stat-icon-wrapper">
+                  <ion-icon name="wallet-outline"></ion-icon>
+                </div>
+                <div class="stat-info">
+                  <span class="stat-val">{{ historyStats.canceled }}%</span>
+                  <span class="stat-label">HEMAT</span>
+                </div>
               </div>
               <div class="stat-divider"></div>
-              <div class="stat-item">
-                <span class="stat-val">{{ historyStats.bought }}%</span>
-                <span class="stat-label">BELI</span>
+              <div class="stat-item bought">
+                <div class="stat-icon-wrapper">
+                  <ion-icon name="cart-outline"></ion-icon>
+                </div>
+                <div class="stat-info">
+                  <span class="stat-val">{{ historyStats.bought }}%</span>
+                  <span class="stat-label">BELI</span>
+                </div>
               </div>
             </div>
           </ion-card-content>
@@ -109,12 +131,14 @@
             <h3>{{ item.name }}</h3>
             <span class="price">{{ item.price | currency:'IDR':'symbol-narrow':'1.0-0' }}</span>
           </div>
-          <div class="status-badge" [class]="item.status">
-            {{ item.status === 'bought' ? 'DIBELI' : 'DIBATALKAN' }}
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+            <div class="status-badge" [class]="item.status">
+              {{ item.status === 'bought' ? 'DIBELI' : 'DIBATALKAN' }}
+            </div>
+            <ion-button fill="clear" color="medium" class="delete-btn" (click)="deleteItem(item.id)" style="margin: 0; height: 32px;">
+              <ion-icon name="trash-outline"></ion-icon>
+            </ion-button>
           </div>
-          <ion-button fill="clear" color="medium" class="delete-btn" (click)="deleteItem(item.id)">
-            <ion-icon name="trash-outline"></ion-icon>
-          </ion-button>
         </ion-card-content>
       </ion-card>
     </div>
@@ -128,11 +152,11 @@
   </ion-fab>
 
   <!-- Add Item Modal -->
-  <ion-modal [isOpen]="isModalOpen" (didDismiss)="setOpen(false)" initialBreakpoint="0.8" [breakpoints]="[0, 0.8, 1]">
+  <ion-modal [isOpen]="isModalOpen" (didDismiss)="closeModal()" initialBreakpoint="0.8" [breakpoints]="[0, 0.8, 1]">
     <ng-template>
       <ion-content class="ion-padding modal-content">
         <div class="ion-text-center ion-margin-bottom">
-          <h2 style="font-weight: 800; color: var(--ion-color-primary);">TAMBAH BARANG</h2>
+          <h2 style="font-weight: 800; color: var(--ion-color-primary);">{{ editingItemId ? 'UBAH BARANG' : 'TAMBAH BARANG' }}</h2>
           <p style="color: var(--ion-color-medium); font-size: 14px;">Mari beri waktu untuk hatimu berpikir...</p>
         </div>
 
@@ -172,10 +196,10 @@
             </ion-select>
           </ion-item>
 
-          <ion-button expand="block" class="submit-btn" (click)="addItem()">
-            MULAI COOLING DOWN
+          <ion-button expand="block" class="submit-btn" (click)="saveItem()">
+            {{ editingItemId ? 'SIMPAN PERUBAHAN' : 'MULAI COOLING DOWN' }}
           </ion-button>
-          <ion-button expand="block" fill="clear" color="medium" (click)="setOpen(false)">
+          <ion-button expand="block" fill="clear" color="medium" (click)="closeModal()">
             BATALKAN
           </ion-button>
         </div>

@@ -26,6 +26,8 @@ export class HomePage implements OnInit, OnDestroy {
     cooldownUnit: 'days' as 'minutes' | 'hours' | 'days'
   };
   
+  editingItemId: string | null = null;
+  isDarkMode: boolean = false;
   isModalOpen = false;
   private updateInterval: any;
 
@@ -42,9 +44,22 @@ export class HomePage implements OnInit, OnDestroy {
       this.savedMoney = total;
     });
 
-    // Update progress bars and remaining time every 10 seconds
+    // Check dark mode preference
+    const savedDark = localStorage.getItem('darkMode') === 'true';
+    if (savedDark) {
+      this.isDarkMode = true;
+      document.documentElement.classList.add('ion-palette-dark');
+    }
+
+    // Update progress bars and remaining time every 1 second
     this.updateInterval = setInterval(() => {
-    }, 10000);
+    }, 1000);
+  }
+
+  toggleDarkMode() {
+    this.isDarkMode = !this.isDarkMode;
+    localStorage.setItem('darkMode', this.isDarkMode.toString());
+    document.documentElement.classList.toggle('ion-palette-dark', this.isDarkMode);
   }
 
   async requestNotificationPermission() {
@@ -71,14 +86,7 @@ export class HomePage implements OnInit, OnDestroy {
     this.isModalOpen = isOpen;
   }
 
-  async addItem() {
-    // For iOS Web: Permission MUST be requested via user gesture (button click)
-    try {
-      const status = await LocalNotifications.checkPermissions();
-      if (status.display !== 'granted') {
-        await LocalNotifications.requestPermissions();
-      }
-    } catch (e) {}
+  async saveItem() {
     if (!this.newItem.name || !this.newItem.price || this.newItem.price <= 0) {
       const toast = await this.toastCtrl.create({
         message: 'Mohon isi nama dan harga dengan benar!',
@@ -97,18 +105,55 @@ export class HomePage implements OnInit, OnDestroy {
 
     const cooldownDate = new Date(now.getTime() + this.newItem.cooldownValue * multiplier);
 
-    const item: Item = {
-      id: Date.now().toString(),
-      name: this.newItem.name,
-      price: this.newItem.price,
-      priority: this.newItem.priority,
-      createdAt: now.getTime(),
-      cooldownUntil: cooldownDate.getTime(),
-      status: 'cooling'
-    };
-
-    await this.dataService.addItem(item);
+    if (this.editingItemId) {
+      // Update existing item
+      const itemToUpdate = this.items.find(i => i.id === this.editingItemId);
+      if (itemToUpdate) {
+        itemToUpdate.name = this.newItem.name;
+        itemToUpdate.price = this.newItem.price;
+        itemToUpdate.priority = this.newItem.priority;
+        itemToUpdate.cooldownUntil = cooldownDate.getTime();
+        await this.dataService.updateItem(itemToUpdate);
+      }
+    } else {
+      // Add new item
+      const item: Item = {
+        id: Date.now().toString(),
+        name: this.newItem.name,
+        price: this.newItem.price,
+        priority: this.newItem.priority,
+        createdAt: now.getTime(),
+        cooldownUntil: cooldownDate.getTime(),
+        status: 'cooling'
+      };
+      await this.dataService.addItem(item);
+    }
     
+    this.closeModal();
+    const toast = await this.toastCtrl.create({
+      message: this.editingItemId ? 'Barang berhasil diperbarui!' : 'Barang berhasil ditambahkan!',
+      duration: 2000,
+      color: 'success',
+      position: 'top'
+    });
+    toast.present();
+  }
+
+  editItem(item: Item) {
+    this.editingItemId = item.id;
+    this.newItem = {
+      name: item.name,
+      price: item.price,
+      priority: item.priority,
+      cooldownValue: 1, // Reset value/unit since we calculate new cooldownUntil
+      cooldownUnit: 'minutes'
+    };
+    this.isModalOpen = true;
+  }
+
+  closeModal() {
+    this.isModalOpen = false;
+    this.editingItemId = null;
     this.newItem = {
       name: '',
       price: null,
@@ -116,15 +161,6 @@ export class HomePage implements OnInit, OnDestroy {
       cooldownValue: 1,
       cooldownUnit: 'days'
     };
-    this.setOpen(false);
-
-    const toast = await this.toastCtrl.create({
-      message: 'Barang berhasil ditambahkan!',
-      duration: 2000,
-      color: 'success',
-      position: 'top'
-    });
-    toast.present();
   }
 
   get filteredItems() {
@@ -191,9 +227,10 @@ export class HomePage implements OnInit, OnDestroy {
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
     
-    if (days > 0) return `${days} hari ${hours}j lagi`;
-    if (hours > 0) return `${hours}j ${minutes}m lagi`;
-    return `${minutes}m lagi`;
+    if (days > 0) return `${days}h ${hours}j ${minutes}m lagi`;
+    if (hours > 0) return `${hours}j ${minutes}m ${seconds}s lagi`;
+    return `${minutes}m ${seconds}s lagi`;
   }
 }

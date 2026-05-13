@@ -54,6 +54,16 @@ export class DataService {
     }
   }
 
+  async updateItem(updatedItem: Item) {
+    const items = this.items$.getValue();
+    const index = items.findIndex(i => i.id === updatedItem.id);
+    if (index > -1) {
+      items[index] = updatedItem;
+      await this.saveItems(items);
+      await this.scheduleNotification(updatedItem);
+    }
+  }
+
   async deleteItem(id: string) {
     const items = this.items$.getValue();
     const newItems = items.filter(i => i.id !== id);
