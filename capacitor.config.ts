@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.fadil.delaybuy',
+  appId: 'com.nazril.delaybuy',
   appName: 'DelayBuy',
   webDir: 'www',
   plugins: {

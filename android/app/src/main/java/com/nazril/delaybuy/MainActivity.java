@@ -1,4 +1,4 @@
-package com.fadil.delaybuy;
+package com.nazril.delaybuy;
 
 import com.getcapacitor.BridgeActivity;
 
